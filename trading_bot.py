@@ -48,12 +48,14 @@ def place_trade(action, stop_loss_pips, entry_price):
     if action.startswith("SELL"):
         units = -abs(units)
 
+    risk_reward_ratio = float(data.get("risk_reward", 2))
+
     if action == "buy":
-    stop_loss_price = round(entry_price - pip_risk, 5)
-    take_profit_price = round(entry_price + (pip_risk * risk_reward_ratio), 5)
-    else:  # sell
-    stop_loss_price = round(entry_price + pip_risk, 5)
-    take_profit_price = round(entry_price - (pip_risk * risk_reward_ratio), 5)
+        stop_loss_price = round(entry_price - pip_risk, 5)
+        take_profit_price = round(entry_price + (pip_risk * risk_reward_ratio), 5)
+    else:
+        stop_loss_price = round(entry_price + pip_risk, 5)
+        take_profit_price = round(entry_price - (pip_risk * risk_reward_ratio), 5)
 
     data = {
         "order": {
