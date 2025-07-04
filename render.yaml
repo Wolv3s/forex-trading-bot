@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: forex-trading-bot
+    runtime: python
+    buildCommand: ""
+    startCommand: python trading_bot.py
+    envVars:
+      - key: OANDA_API_KEY
+        sync: false
+      - key: OANDA_ACCOUNT_ID
+        sync: false
+      - key: DISCORD_WEBHOOK_URL
+        sync: false
+      - key: GOOGLE_SERVICE_ACCOUNT_B64
+        sync: false
+      - key: GOOGLE_SHEET_NAME
+        value: ForexTradeLog
+    plan: free

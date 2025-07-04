@@ -1,6 +1,8 @@
-flask
+Flask
+python-dotenv
 requests
+pandas
+schedule
 oandapyV20
-six
 gspread
 oauth2client

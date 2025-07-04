@@ -1,0 +1,13 @@
+[Unit]
+Description=Forex Trading Bot
+After=network.target
+
+[Service]
+User=yourusername
+WorkingDirectory=/home/yourusername/forex-trading-bot
+ExecStart=/usr/local/bin/gunicorn -w 4 -b 0.0.0.0:10000 trading_bot:app
+Restart=always
+EnvironmentFile=/home/yourusername/forex-trading-bot/.env
+
+[Install]
+WantedBy=multi-user.target
