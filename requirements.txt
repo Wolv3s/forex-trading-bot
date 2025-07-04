@@ -2,3 +2,5 @@ flask
 requests
 oandapyV20
 six
+gspread
+oauth2client
