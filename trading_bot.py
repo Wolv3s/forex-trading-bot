@@ -19,13 +19,43 @@ if not OANDA_API_KEY or not OANDA_ACCOUNT_ID:
     exit(1)
 
 # Trade log file
-TRADE_LOG_FILE = "trade_log.csv"
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
 
-# Ensure trade log exists with headers
-if not os.path.exists(TRADE_LOG_FILE):
-    with open(TRADE_LOG_FILE, "w", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerow(["timestamp", "action", "units", "price", "risk_amount", "balance"])
+# Authenticate and access Google Sheet
+import json
+
+# Get JSON from env var
+def get_sheet():
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    service_account_info = json.loads(os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"])
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(service_account_info, scope)
+    client = gspread.authorize(creds)
+    sheet = client.open("ForexTradeLog").sheet1
+    return sheet
+
+# Log trade to Google Sheets
+def log_trade(action, units, price, risk_amount, balance):
+    timestamp = datetime.utcnow().isoformat()
+    row = [timestamp, action, units, price, risk_amount, balance]
+
+    # Google Sheets
+    try:
+        sheet = get_sheet()
+        sheet.append_row(row)
+        print("Logged to Google Sheets")
+    except Exception as e:
+        print(f"Failed to log to Google Sheets: {e}")
+
+    # CSV fallback
+    try:
+        print("Writing to CSV:", row)
+        with open("trade_log.csv", "a", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(row)
+        print("Logged to CSV")
+    except Exception as e:
+        print(f"Failed to write to CSV: {e}")
 
 # Get live account balance
 def get_account_balance():
@@ -87,18 +117,23 @@ def place_trade(action, stop_loss_pips, entry_price, risk_reward_ratio):
         send_discord_alert(f"Trade failed: {e}")
         return False
 
+print(f"DISCORD_WEBHOOK_URL: {DISCORD_WEBHOOK_URL}")
+print(f"Sending Discord alert to: {DISCORD_WEBHOOK_URL}")
+
 def send_discord_alert(message):
+    print(f"Trying to send Discord alert to: {DISCORD_WEBHOOK_URL}")
     if DISCORD_WEBHOOK_URL:
         try:
             response = requests.post(DISCORD_WEBHOOK_URL, json={"content": message})
-            print("Discord alert sent, status:", response.status_code)
+            print("Discord response:", response.status_code, response.text)
         except Exception as e:
             print(f"Failed to send Discord alert: {e}")
+    else:
+        print("DISCORD_WEBHOOK_URL is missing")
 
-def log_trade(action, units, price, risk_amount, balance):
-    with open(TRADE_LOG_FILE, "a", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerow([datetime.utcnow().isoformat(), action, units, price, risk_amount, balance])
+@app.route('/', methods=['GET'])
+def index():
+    return "Trading bot is live!", 200
 
 @app.route('/webhook', methods=['POST'])
 def webhook():
